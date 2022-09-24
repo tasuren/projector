@@ -1,116 +1,206 @@
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(default)] // if we add new fields, give them default values when deserializing old state
-pub struct TemplateApp {
-    // Example stuff:
-    label: String,
+//! projector by tasuren
 
-    // this how you opt-out of serialization of a member
-    #[serde(skip)]
-    value: f32,
+use eframe::{
+    CreationContext, App, Frame, Storage, egui::{
+        Context, Window, CentralPanel, Layout,
+        FontDefinitions, FontData, FontFamily, Id
+    }, get_value, set_value
+};
+
+use egui::{Pos2, Color32, Stroke, Align, TopBottomPanel, Visuals, Rect, Style,  ScrollArea};
+use serde::{ Deserialize, Serialize };
+
+use super::{ APPLICATION_NAME, VERSION };
+
+
+// デフォルトのRectを作ります。値が意味をなしていないRectが返されます。
+fn make_default_rect() -> Rect {
+    Rect::from_min_max(Pos2::default(), Pos2::default())
 }
 
-impl Default for TemplateApp {
-    fn default() -> Self {
+
+/// アイテム情報を格納するための構造体です。
+#[derive(Clone, Deserialize, Serialize)]
+struct Item {
+    title: String,
+    description: String,
+    parent: usize,
+    rect: Rect,
+    #[serde(skip)]
+    editing: bool
+}
+
+impl Item {
+    /// これのインスタンスを新しく作ります。
+    fn new(parent: usize) -> Self {
         Self {
-            // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7,
+            title: String::new(), description: String::new(),
+            parent: parent, rect: make_default_rect(), editing: false
         }
     }
 }
 
-impl TemplateApp {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customized the look at feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
+/// GUIアプリを表す構造体です。
+#[derive(Default, Deserialize, Serialize)]
+pub struct Application {
+    #[serde(skip)]
+    changed_window_size: bool,
+    #[serde(skip)]
+    maybe_item_title: String,
+    is_light_mode: bool,
+    data: Vec<Item>
+}
+
+/// フォントを設定します。
+fn setup(ctx: &Context) {
+    let mut fonts = FontDefinitions::default();
+    fonts.font_data.insert("ZenMaruGothic".to_owned(), FontData::from_static(
+        include_bytes!("../assets/ZenMaruGothic-Regular.ttf")
+    ));
+    fonts.families.get_mut(&FontFamily::Proportional).unwrap()
+        .insert(0, "ZenMaruGothic".to_owned());
+    fonts.families.get_mut(&FontFamily::Monospace).unwrap()
+        .push("ZenMaruGothic".to_owned());
+    ctx.set_fonts(fonts);
+    let mut style = Style::default();
+    for (_, font) in style.text_styles.iter_mut() {
+        font.size = 20.;
+    }
+    ctx.set_style(style);
+}
+
+impl Application {
+    /// 新しくアプリのインスタンスを作ります。
+    pub fn new(cc: &CreationContext<'_>) -> Self {
+        cc.egui_ctx.set_pixels_per_point(1.5);
+        setup(&cc.egui_ctx);
+
         if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
+            return get_value(storage, APPLICATION_NAME).unwrap_or_default();
+        };
 
         Default::default()
     }
 }
 
-impl eframe::App for TemplateApp {
-    /// Called by the frame work to save state before shutdown.
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
+impl App for Application {
+    fn save(&mut self, storage: &mut dyn Storage) {
+        set_value(storage, APPLICATION_NAME, self);
     }
 
-    /// Called each time the UI needs repainting, which may be many times per second.
-    /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { label, value } = self;
+    fn update(&mut self, ctx: &Context, frame: &mut Frame) {
+        // 初期状態のウィンドウのサイズを設定する。
+        if !self.changed_window_size {
+            frame.set_window_size((1500., 900.).into());
+            self.changed_window_size = true;
+        };
 
-        // Examples of how to create different panels and windows.
-        // Pick whichever suits you.
-        // Tip: a good default choice is to just keep the `CentralPanel`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        // もしまだ何もアイテムがないのなら、新しく作る。
+        if self.data.is_empty() {
+            self.data.push(Item::new(0));
+            self.data[0].title = "Origin".to_string();
+        };
 
-        #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Quit").clicked() {
-                        _frame.close();
-                    }
-                });
-            });
-        });
-
-        egui::SidePanel::left("side_panel").show(ctx, |ui| {
-            ui.heading("Side Panel");
-
+        // メニューを作る。
+        TopBottomPanel::top("menu").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(label);
-            });
+                // 新しくアイテムを追加するためのフォームを作る。
+                ui.with_layout(Layout::left_to_right(Align::LEFT), |ui| {
+                    // ダークモードとライトモードの切り替えボタンを付ける。
+                    if ui.button(if self.is_light_mode { "☀️" } else { "🌙" }).clicked() {
+                        ctx.set_visuals(if self.is_light_mode {
+                            Visuals::dark() } else { Visuals::light()
+                        });
+                        self.is_light_mode = !self.is_light_mode;
+                    };
+                    ui.separator();
 
-            ui.add(egui::Slider::new(value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                *value += 1.0;
-            }
+                    // タイトル入力欄と、新しいアイテム追加ボタンを付ける。
+                    ui.text_edit_singleline(&mut self.maybe_item_title);
+                    if ui.button("アイテムを追加する").clicked() {
+                        let mut item = Item::new(self.data.len());
+                        item.title = self.maybe_item_title.clone();
+                        self.maybe_item_title = String::new();
+                        self.data.push(item);
+                    };
+                    ui.separator();
+                });
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("powered by ");
-                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                    ui.label(" and ");
-                    ui.hyperlink_to(
-                        "eframe",
-                        "https://github.com/emilk/egui/tree/master/crates/eframe",
-                    );
-                    ui.label(".");
+                // 著作権表記を作る。
+                ui.with_layout(Layout::right_to_left(Align::RIGHT), |ui| {
+                    ui.hyperlink_to("(c) 2022 tasuren", "https://tasuren.xyz");
                 });
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
+        // メモのアイテムを追加する。
+        let mut window_statuses = vec![true;self.data.len()];
+        let mut lines = Vec::new();
+        let mut window;
+        for (i, window_status) in window_statuses.iter_mut().enumerate() {
+            window = Window::new(&self.data[i].title).id(Id::new(format!("{}", i)))
+                .open(window_status).min_width(150.).min_height(75.)
+                .default_width(150.).default_height(75.)
+                .default_rect(self.data[i].rect).vscroll(true);
+            self.data[i].rect = window.show(ctx, |ui| {
+                TopBottomPanel::bottom(format!("control_{}", i)).show_inside(ui, |ui| {
+                    ui.columns(2, |columns| {
+                        // 他のアイテムに繋げるメニューボタンを付ける。
+                        columns[0].menu_button("他に繋ぐ", |ui| {
+                            for (maybe_parent_index, item) in self.data.iter().enumerate() {
+                                if ui.button(&item.title).clicked() {
+                                    self.data[i].parent = maybe_parent_index;
+                                    break;
+                                };
+                            };
+                        });
+                        // 編集ボタンを付ける。
+                        if columns[1].button(if self.data[i].editing { "完了" } else { "編集" })
+                            .clicked() { self.data[i].editing = !self.data[i].editing; };
+                    });
+                });
 
-            ui.heading("eframe template");
-            ui.hyperlink("https://github.com/emilk/eframe_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
-            egui::warn_if_debug_build(ui);
+                // 内容を編集するテキストボックスを付ける。
+                CentralPanel::default().show_inside(ui, |ui|
+                    ScrollArea::vertical().show(ui, |ui| if self.data[i].editing {
+                        ui.text_edit_singleline(&mut self.data[i].title);
+                        ui.text_edit_multiline(&mut self.data[i].description);
+                    } else { ui.label(&self.data[i].description); })
+                );
+            }).unwrap().response.rect;
+
+            // 後で線で繋ぐのに使うためのウィンドウの座標をキャッシュしておく。
+            lines.push((self.data[i].rect.center(), self.data[i].parent));
+        };
+
+        // 消されたアイテムをデータを消す。
+        for (i, window_status) in window_statuses.iter().enumerate() {
+            if !window_status {
+                self.data.remove(i);
+                let length = self.data.len();
+                for tentative_index in (0..length).map(|i| length - 1 - i) {
+                    if self.data[tentative_index].parent == i {
+                        self.data.remove(tentative_index);
+                    };
+                };
+                break;
+            };
+        };
+
+        // 中央のパネルを作り、ウィンドウとウィンドウの間に線を引く。
+        CentralPanel::default().show(ctx, |ui| {
+            let painter = ui.painter();
+            for line in lines {
+                if let Some(other) = self.data.get(line.1) {
+                    painter.line_segment(
+                        [line.0, other.rect.center()],
+                        Stroke::new(5., if self.is_light_mode {
+                            Color32::GRAY } else { Color32::DARK_GRAY
+                        })
+                    );
+                } else { break; };
+            };
         });
-
-        if false {
-            egui::Window::new("Window").show(ctx, |ui| {
-                ui.label("Windows can be moved by dragging them.");
-                ui.label("They are automatically sized based on contents.");
-                ui.label("You can turn on resizing and scrolling if you like.");
-                ui.label("You would normally chose either panels OR windows.");
-            });
-        }
     }
 }
