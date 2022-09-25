@@ -1,4 +1,4 @@
-![GitHub all releases](https://img.shields.io/github/downloads/tasuren/projector/total) ![GitHub release (latest by date)](https://img.shields.io/github/v/release/tasuren/projector)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/tasuren/projector)
 
 # projector
 これは、マインドマップ形式でメモを保存するためのウェブツールです。  
