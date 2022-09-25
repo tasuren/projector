@@ -3,7 +3,3 @@
 /target
 /dist
 *.*-*
-*.ttf
-
-!licenses.html
-!information.html
