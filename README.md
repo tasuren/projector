@@ -6,7 +6,7 @@
 今の所、Windows10とMac(M1)で動作することを確認していて、ダウンロードは[こちら](https://github.com/tasuren/aSynthe/releases)から可能です。  
 なお、動作があまり安定していませんが、[ウェブ版](https://projector.tasuren.xyz)もあります。  
 
-## Screenshots
+## Screenshot
 <img width="894" alt="スクリーンショット 2022-09-25 17 55 34" src="https://user-images.githubusercontent.com/45121209/192135786-50aab79c-6500-416c-b21d-0520a0d63a0c.png">
 
 ## Builds

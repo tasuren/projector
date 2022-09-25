@@ -244,7 +244,7 @@ impl App for Application {
                 ui.with_layout(Layout::right_to_left(Align::RIGHT), |ui| {
                     ui.hyperlink_to("© 2022 tasuren", "https://tasuren.xyz");
                     ui.separator();
-                    ui.hyperlink_to(" ❔ このアプリについて", "https://projector.tasuren.xyz/infomation.html");
+                    ui.hyperlink_to(" ❔ このアプリについて", "https://projector.tasuren.xyz/information.html");
                     #[cfg(target_arch="wasm32")]
                     ui.hyperlink_to("📥 オフライン版", "https://github.com/tasuren/projector/releases");
                 });
