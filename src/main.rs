@@ -18,9 +18,11 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     let native_options = eframe::NativeOptions::default();
-    eframe::run_native(APPLICATION_NAME, native_options, Box::new(
-        |cc| Box::new(Application::new(cc))
-    ));
+    eframe::run_native(&format!("{} v{}", APPLICATION_NAME, VERSION),
+        native_options, Box::new(
+            |cc| Box::new(Application::new(cc))
+        )
+    );
 }
 
 // when compiling to web using trunk.
@@ -34,8 +36,7 @@ fn main() {
 
     let web_options = eframe::WebOptions::default();
     eframe::start_web(
-        "the_canvas_id", // hardcode it
-        web_options,
-        Box::new(|cc| Box::new(eframe_template::Application::new(cc))),
+        "the_canvas_id", web_options,
+        Box::new(|cc| Box::new(Application::new(cc))),
     ).expect("failed to start eframe");
 }
