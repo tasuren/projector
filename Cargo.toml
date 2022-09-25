@@ -35,7 +35,7 @@ winres = "0.1.12"
 [package.metadata.bundle]
 name = "projector"
 identifier = "xyz.tasuren.projector"
-icon = []
+icon = ["assets/icon.png"]
 resources = []
 copyright = "(c) tasuren 2022"
 category = "public.app-category.utilities"
