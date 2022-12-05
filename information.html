@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <title>projector</title>
+    <meta name="description" content="マインドマップ形式でメモをとれるツールであるprojectorのホームページです。">
+    <meta name="author" content="tasuren">
+    <meta name="theme-color" content="#404040">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, user-scalable=yes">
+    <script>
+      // 外部リンクを`target=_blank`にして新しいタブで開くようにする。
+      window.onload = function () {
+        let url;
+        for (element of document.getElementsByTagName("a")) {
+          url = element.getAttribute("href");
+          if (!url.startsWith(window.location.origin) && url.startsWith("http"))
+            element.setAttribute("target", "_blank");
+        };
+      };
+    </script>
+  </head>
+  <body style="background: black; color: white;">
+    <h1>projector</h1>
+    <p>ここは、マインドマップ形式でメモを保存するためのツールであるprojectorのホームページです。<br>
+      まだ開発されたばかりで、動作に補償はありません。<br>
+      アプリを開くには<a href="/" target="_blank">こちら</a>をクリックしてください。
+
+    <h2>使い方</h2>
+    <p>付箋のようなカードを追加して、それを他のカードと線を繋ぐ、と言った感じにメモを作ります。<br>
+      上にある入力欄に、カードのタイトルを入力し、「追加」というボタンを押すことで、カードを追加できます。<br>
+      カードのバツボタンで、カードをけすことができます。<br>
+      また、編集というボタンを押すことで、タイトルとカードの中身の編集をすることができます。<br>
+      そして、左上にあるフォルダアイコンのボタンで読み込み、フロッピーアイコンのボタンで作ったメモを保存することができます。<br>
+      ちなみに、一番左上にあるボタンを押すことで、テーマの切り替えが可能です。
+    </p>
+
+    <h2>情報</h2>
+    <p>開発者：<a href="https://tasuren.xyz">tasuren</a><br>
+      開発言語：Rust</p>
+
+    <h3>リポジトリ</h3>
+    <p>バグ等のお知らせは、以下のリンク先にある"Issues"にて報告をしてくれるとありがたいです。<br>
+      なお、保國するのには、GitHubのアカウントが必要です。(登録は無料です。)<br>
+      <a href="https://github.com/tasuren/projector">https://github.com/tasuren/projector</a></p>
+
+    <h3>更新履歴</h3>
+    <p>更新履歴は上のリポジトリの"Releases"をご覧ください。</p>
+
+    <h3>謝辞</h3>
+    <p>このツールでは、日本語のフォントとして、ZenMaruGothicというフォントを使用しています。<br>
+      著作権：Copyright 2021 The Zen Maru Gothic Project Authors (https://github.com/googlefonts/zen-marugothic)<br>
+      ライセンス：<a href="https://github.com/googlefonts/zen-marugothic/blob/main/OFL.txt">https://github.com/googlefonts/zen-marugothic/blob/main/OFL.txt</a><br>
+      また、ライブラリのライセンス情報は<a href="licenses.html" target="_blank">こちら</a>にまとめてあります。</p>
+  </body>
+</html>

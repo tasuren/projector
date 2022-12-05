@@ -1,0 +1,17 @@
+{
+  "name": "projector",
+  "short_name": "projector",
+  "icons": [
+    {
+      "src": "./icon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    }
+  ],
+  "lang": "ja",
+  "id": "/index.html",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "black",
+  "theme_color": "black"
+}
